@@ -5,7 +5,7 @@ import com.intergiciel.enrollmentservice.client.StudentClient;
 import com.intergiciel.enrollmentservice.client.NotificationClient;
 import com.intergiciel.enrollmentservice.dto.CourseDto;
 import com.intergiciel.enrollmentservice.dto.StudentDto;
-import com.intergiciel.enrollmentservice.dto.NotificationDto;
+import com.intergiciel.enrollmentservice.dto.NotificationRequest;
 import com.intergiciel.enrollmentservice.model.Enrollment;
 import com.intergiciel.enrollmentservice.repository.EnrollmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,16 +74,27 @@ public class EnrollmentService {
         System.out.println("Inscription enregistrée avec succès : " + savedEnrollment.getId());
 
         // Notification
-        NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setStudentId(studentId);
-        notificationDto.setCourseId(courseId);
-        notificationDto.setSemester("1");  // adapter selon besoin
+        //NotificationDto notificationDto = new NotificationDto();
+        //notificationDto.setStudentId(studentId);
+        //notificationDto.setCourseId(courseId);
+        //notificationDto.setSemester("1");  // adapter selon besoin
 
-        notificationClient.sendNotification(notificationDto);
+        //notificationClient.sendNotification(notificationDto);
 
-        System.out.println("Notification envoyée.");
+        //System.out.println("Notification envoyée.");
+
+       //totification pour request
+        NotificationRequest request = new NotificationRequest();
+        request.setToEmail(student.getEmail());
+        request.setSubject("Inscription validée");
+        request.setBody("Bonjour " + student.getNom() + ", vous êtes bien inscrit au cours " + course.getTitle());
+
+        notificationClient.sendNotification(request);
+
 
         return savedEnrollment;
+     
+
     }
 
     // Récupérer toutes les inscriptions

@@ -1,6 +1,7 @@
 package com.intergiciel.enrollmentservice.client;
 
-import com.intergiciel.enrollmentservice.dto.NotificationDto;
+import com.intergiciel.enrollmentservice.dto.NotificationRequest;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,6 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface NotificationClient {
 
     @PostMapping("/api/notifications")
-    void sendNotification(@RequestBody NotificationDto notificationDto);
+    void sendNotification(@RequestBody NotificationRequest request);
 }
 
