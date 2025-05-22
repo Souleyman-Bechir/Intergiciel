@@ -1,0 +1,26 @@
+# Logs
+*.log
+
+# Crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# Build output
+/target/
+/build/
+
+# IDE settings
+.idea/
+*.iml
+*.classpath
+*.project
+*.settings/
+
+# OS system files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.swp
+*.bak
