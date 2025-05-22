@@ -5,6 +5,8 @@ import com.intergiciel.enrollmentservice.client.StudentClient;
 import com.intergiciel.enrollmentservice.client.NotificationClient;
 import com.intergiciel.enrollmentservice.dto.CourseDto;
 import com.intergiciel.enrollmentservice.dto.StudentDto;
+import com.intergiciel.enrollmentservice.exception.CourseNotFoundException;
+import com.intergiciel.enrollmentservice.exception.StudentNotFoundException;
 import com.intergiciel.enrollmentservice.dto.NotificationRequest;
 import com.intergiciel.enrollmentservice.model.Enrollment;
 import com.intergiciel.enrollmentservice.repository.EnrollmentRepository;
@@ -39,25 +41,35 @@ public class EnrollmentService {
     @Transactional
     public Enrollment enroll(Long studentId, Long courseId) {
         System.out.println("Début de l'inscription avec studentId = " + studentId + ", courseId = " + courseId);
-
+        
         if (studentId == null) {
-            throw new RuntimeException("L'ID de l'étudiant est null, impossible de récupérer l'étudiant.");
+            throw new StudentNotFoundException("L'ID de l'étudiant est null, impossible de récupérer l'étudiant.");
         }
         if (courseId == null) {
-            throw new RuntimeException("L'ID du cours est null, impossible de récupérer le cours.");
+            throw new CourseNotFoundException("L'ID du cours est null, impossible de récupérer le cours.");
         }
 
-        // Vérifier si l'étudiant existe
-        StudentDto student = studentClient.getStudentById(studentId);
-        if (student == null) {
-            throw new RuntimeException("Étudiant avec ID " + studentId + " non trouvé.");
-        }
+        StudentDto student;
+    try {
+    student = studentClient.getStudentById(studentId);
+    } catch (feign.FeignException.NotFound e) {
+    throw new StudentNotFoundException("Étudiant avec ID " + studentId + " non trouvé.");
+}
 
-        // Vérifier si le cours existe
-        CourseDto course = courseClient.getCourseById(courseId);
-        if (course == null) {
-            throw new RuntimeException("Cours avec ID " + courseId + " non trouvé.");
-        }
+    CourseDto course;
+try {
+    course = courseClient.getCourseById(courseId);
+
+    // Vérification de sécurité au cas où Feign ne lève pas d'exception mais retourne null
+    if (course == null) {
+        throw new CourseNotFoundException("Le cours avec l'ID " + courseId + " est introuvable.");
+    }
+
+} catch (feign.FeignException.NotFound e) {
+    throw new CourseNotFoundException("Cours avec l'ID " + courseId + " non trouvé (404).");
+}
+
+
 
         // Vérifier si déjà inscrit
         boolean alreadyEnrolled = enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId);
@@ -70,7 +82,6 @@ public class EnrollmentService {
         enrollment.setStudentId(studentId);
         enrollment.setCourseId(courseId);
         Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
-
         System.out.println("Inscription enregistrée avec succès : " + savedEnrollment.getId());
 
         // Notification
@@ -88,9 +99,12 @@ public class EnrollmentService {
         request.setToEmail(student.getEmail());
         request.setSubject("Inscription validée");
         request.setBody("Bonjour " + student.getNom() + ", vous êtes bien inscrit au cours " + course.getTitle());
-
-        notificationClient.sendNotification(request);
-
+        
+        try {
+            notificationClient.sendNotification(request);
+        } catch (Exception e) {
+        System.err.println("Erreur en envoyant la notification : " + e.getMessage());
+    }
 
         return savedEnrollment;
      
