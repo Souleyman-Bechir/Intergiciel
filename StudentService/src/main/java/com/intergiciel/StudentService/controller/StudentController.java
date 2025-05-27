@@ -16,19 +16,22 @@ public class StudentController {
     @Autowired
     private StudentService studentService;
 
-    // Méthode POST pour créer un étudiant
+    // Création avec vérification d'unicité par email
     @PostMapping("/create")
-    public Student createStudent(@RequestBody Student student) {
-        return studentService.saveStudent(student);
+    public ResponseEntity<?> createStudent(@RequestBody Student student) {
+        Optional<Student> existingStudent = studentService.getStudentByEmail(student.getEmail());
+        if (existingStudent.isPresent()) {
+            return ResponseEntity.status(409).body("Un étudiant avec cet email existe déjà.");
+        }
+        Student savedStudent = studentService.saveStudent(student);
+        return ResponseEntity.ok(savedStudent);
     }
 
-    // Méthode GET pour récupérer tous les étudiants
     @GetMapping("/all")
     public List<Student> getAllStudents() {
         return studentService.getAllStudents();
     }
 
-    // Méthode GET pour récupérer un étudiant par son id
     @GetMapping("/{id}")
     public ResponseEntity<Student> getStudentById(@PathVariable("id") Long id) {
         Optional<Student> student = studentService.getStudentById(id);
@@ -36,25 +39,33 @@ public class StudentController {
                       .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Méthode PUT pour mettre à jour un étudiant
     @PutMapping("/{id}")
-    public ResponseEntity<Student> updateStudent(@PathVariable("id") Long id, @RequestBody Student student) {
-        Optional<Student> existingStudent = studentService.getStudentById(id);
-        if (existingStudent.isPresent()) {
-            student.setId(id);  // on s'assure que l'id est correct
-            Student updatedStudent = studentService.saveStudent(student);
-            return ResponseEntity.ok(updatedStudent);
-        }
+public ResponseEntity<?> updateStudent(@PathVariable("id") Long id, @RequestBody Student student) {
+    Optional<Student> existingStudent = studentService.getStudentById(id);
+    if (existingStudent.isEmpty()) {
         return ResponseEntity.notFound().build();
     }
 
-    // Méthode DELETE pour supprimer un étudiant par son id
+    // Vérifier si l'email que l'on veut mettre à jour est déjà utilisé par un autre étudiant
+    Optional<Student> studentWithEmail = studentService.getStudentByEmail(student.getEmail());
+    if (studentWithEmail.isPresent() && !studentWithEmail.get().getId().equals(id)) {
+        // Si email déjà pris par un autre étudiant (différent de celui qu'on met à jour)
+        return ResponseEntity.status(409).body("Cet email est déjà utilisé par un autre étudiant.");
+    }
+
+    // On peut mettre à jour
+    student.setId(id);
+    Student updatedStudent = studentService.saveStudent(student);
+    return ResponseEntity.ok(updatedStudent);
+}
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStudent(@PathVariable("id") Long id) {
         Optional<Student> student = studentService.getStudentById(id);
         if (student.isPresent()) {
             studentService.deleteStudent(id);
-            return ResponseEntity.noContent().build(); // HTTP 204 No Content
+            return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
     }
