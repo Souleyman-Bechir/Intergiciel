@@ -1,0 +1,50 @@
+server:
+  port: 8888  # Port de l'API Gateway
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true  # Pour tout gérer en minuscules automatiquement
+
+      routes:
+        - id: enrollmentservice         # Identifiant libre
+          uri: lb://enrollmentservice    # Correspond exactement à spring.application.name du microservice
+          predicates:
+            - Path=/api/enrollments/**
+
+        - id: studentservice
+          uri: lb://studentservice
+          predicates:
+            - Path=/students/**
+
+        - id: courseservice
+          uri: lb://courseservice
+          predicates:
+            - Path=/courses/**
+
+        - id: notificationservice
+          uri: lb://notificationservice
+          predicates:
+            - Path=/notifications/**
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"   # Expose tous les endpoints actuator
+  endpoint:
+    health:
+      show-details: always

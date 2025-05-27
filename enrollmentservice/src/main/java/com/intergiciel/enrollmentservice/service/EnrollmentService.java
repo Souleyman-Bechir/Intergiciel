@@ -37,11 +37,17 @@ public class EnrollmentService {
         return enroll(enrollment.getStudentId(), enrollment.getCourseId());
     }
 
-    // Inscription à partir des IDs (utilisée par MultiEnrollmentRequest ou EnrollmentRequest)
+    // Surcharge : version sans semester (défaut = null)
     @Transactional
     public Enrollment enroll(Long studentId, Long courseId) {
+        return enroll(studentId, courseId, null);
+    }
+
+    // Inscription à partir des IDs (utilisée par MultiEnrollmentRequest ou EnrollmentRequest)
+    @Transactional
+    public Enrollment enroll(Long studentId, Long courseId, Integer semester) {
         System.out.println("Début de l'inscription avec studentId = " + studentId + ", courseId = " + courseId);
-        
+
         if (studentId == null) {
             throw new StudentNotFoundException("L'ID de l'étudiant est null, impossible de récupérer l'étudiant.");
         }
@@ -50,26 +56,22 @@ public class EnrollmentService {
         }
 
         StudentDto student;
-    try {
-    student = studentClient.getStudentById(studentId);
-    } catch (feign.FeignException.NotFound e) {
-    throw new StudentNotFoundException("Étudiant avec ID " + studentId + " non trouvé.");
-}
+        try {
+            student = studentClient.getStudentById(studentId);
+        } catch (feign.FeignException.NotFound e) {
+            throw new StudentNotFoundException("Étudiant avec ID " + studentId + " non trouvé.");
+        }
 
-    CourseDto course;
-try {
-    course = courseClient.getCourseById(courseId);
+        CourseDto course;
+        try {
+            course = courseClient.getCourseById(courseId);
 
-    // Vérification de sécurité au cas où Feign ne lève pas d'exception mais retourne null
-    if (course == null) {
-        throw new CourseNotFoundException("Le cours avec l'ID " + courseId + " est introuvable.");
-    }
-
-} catch (feign.FeignException.NotFound e) {
-    throw new CourseNotFoundException("Cours avec l'ID " + courseId + " non trouvé (404).");
-}
-
-
+            if (course == null) {
+                throw new CourseNotFoundException("Le cours avec l'ID " + courseId + " est introuvable.");
+            }
+        } catch (feign.FeignException.NotFound e) {
+            throw new CourseNotFoundException("Cours avec l'ID " + courseId + " non trouvé (404).");
+        }
 
         // Vérifier si déjà inscrit
         boolean alreadyEnrolled = enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId);
@@ -81,34 +83,23 @@ try {
         Enrollment enrollment = new Enrollment();
         enrollment.setStudentId(studentId);
         enrollment.setCourseId(courseId);
+        enrollment.setSemester(semester != null ? semester.toString() : null);
         Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
         System.out.println("Inscription enregistrée avec succès : " + savedEnrollment.getId());
 
         // Notification
-        //NotificationDto notificationDto = new NotificationDto();
-        //notificationDto.setStudentId(studentId);
-        //notificationDto.setCourseId(courseId);
-        //notificationDto.setSemester("1");  // adapter selon besoin
-
-        //notificationClient.sendNotification(notificationDto);
-
-        //System.out.println("Notification envoyée.");
-
-       //totification pour request
         NotificationRequest request = new NotificationRequest();
         request.setToEmail(student.getEmail());
         request.setSubject("Inscription validée");
         request.setBody("Bonjour " + student.getNom() + ", vous êtes bien inscrit au cours " + course.getTitle());
-        
+
         try {
             notificationClient.sendNotification(request);
         } catch (Exception e) {
-        System.err.println("Erreur en envoyant la notification : " + e.getMessage());
-    }
+            System.err.println("Erreur en envoyant la notification : " + e.getMessage());
+        }
 
         return savedEnrollment;
-     
-
     }
 
     // Récupérer toutes les inscriptions
@@ -127,6 +118,7 @@ try {
         Enrollment existing = getEnrollmentById(id);
         existing.setStudentId(updatedEnrollment.getStudentId());
         existing.setCourseId(updatedEnrollment.getCourseId());
+        existing.setSemester(updatedEnrollment.getSemester());
         return enrollmentRepository.save(existing);
     }
 
@@ -135,4 +127,3 @@ try {
         enrollmentRepository.deleteById(id);
     }
 }
-

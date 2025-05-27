@@ -20,7 +20,7 @@ public class EnrollmentController {
     // ➤ Inscription à un seul cours via DTO
     @PostMapping
     public ResponseEntity<Enrollment> createEnrollment(@RequestBody EnrollmentRequest request) {
-        Enrollment enrollment = enrollmentService.enroll(request.getStudentId(), request.getCourseId());
+        Enrollment enrollment = enrollmentService.enroll(request.getStudentId(), request.getCourseId(), request.getSemester());
         return ResponseEntity.ok(enrollment);
     }
 
@@ -29,10 +29,11 @@ public class EnrollmentController {
 public ResponseEntity<?> enrollMultiple(@RequestBody MultiEnrollmentRequest request) {
     List<Long> successful = new java.util.ArrayList<>();
     List<String> errors = new java.util.ArrayList<>();
+    Integer semester = request.getSemester(); 
 
     for (Long courseId : request.getCourseIds()) {
         try {
-            enrollmentService.enroll(request.getStudentId(), courseId);
+            enrollmentService.enroll(request.getStudentId(), courseId, semester);
             successful.add(courseId);
         } catch (Exception e) {
             errors.add("Cours " + courseId + " : " + e.getMessage());

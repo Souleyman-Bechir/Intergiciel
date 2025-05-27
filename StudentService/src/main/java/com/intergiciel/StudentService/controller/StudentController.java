@@ -23,7 +23,7 @@ public class StudentController {
     }
 
     // Méthode GET pour récupérer tous les étudiants
-    @GetMapping("/")
+    @GetMapping("/all")
     public List<Student> getAllStudents() {
         return studentService.getAllStudents();
     }

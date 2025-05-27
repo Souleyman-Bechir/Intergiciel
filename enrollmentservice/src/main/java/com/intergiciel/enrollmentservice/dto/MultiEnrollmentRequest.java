@@ -5,6 +5,7 @@ import java.util.List;
 public class MultiEnrollmentRequest {
     private Long studentId;
     private List<Long> courseIds;
+    private Integer semester;
 
     // Constructeur vide
     public MultiEnrollmentRequest() {}
@@ -18,6 +19,10 @@ public class MultiEnrollmentRequest {
         return courseIds;
     }
 
+    public Integer getSemester() {
+        return semester;
+    }
+
     // Setters
     public void setStudentId(Long studentId) {
         this.studentId = studentId;
@@ -25,5 +30,8 @@ public class MultiEnrollmentRequest {
 
     public void setCourseIds(List<Long> courseIds) {
         this.courseIds = courseIds;
+    }
+    public void setSemester(Integer semester) {
+        this.semester = semester;
     }
 }
