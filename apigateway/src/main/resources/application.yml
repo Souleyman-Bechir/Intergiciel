@@ -10,11 +10,11 @@ spring:
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: true  # Pour tout gérer en minuscules automatiquement
+          lower-case-service-id: true  # Gestion en minuscules automatique des noms de services
 
       routes:
-        - id: enrollmentservice         # Identifiant libre
-          uri: lb://enrollmentservice    # Correspond exactement à spring.application.name du microservice
+        - id: enrollmentservice
+          uri: lb://enrollmentservice
           predicates:
             - Path=/api/enrollments/**
 
@@ -31,7 +31,12 @@ spring:
         - id: notificationservice
           uri: lb://notificationservice
           predicates:
-            - Path=/notifications/**
+            - Path=/api/notifications/**
+
+        - id: paymentservice
+          uri: lb://paymentservice
+          predicates:
+            - Path=/payments/**
 
 eureka:
   client:
@@ -44,7 +49,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"   # Expose tous les endpoints actuator
+        include: "*"
+
   endpoint:
     health:
       show-details: always
+
+# NotchPay API configuration
+notchpay:
+  public:
+    key: pk_test.KjC8jAHnbEYAVO1G7W1ReA3cjQJNxFRiaJq1dSXT97NQ0srxwlh0qvDMK1nVaamcPUasOXqpn2PcQQbx0IjQDqB0auG7lw2JI5c0vMFG7pECoIZZkZ0RmsBxaP4b5
+  secret:
+    key: Bearer sk_test.1MH6J4mgrGPo6KMX7zRdAXq0FaGScwrPMyerv098lJexUAGPTxShqioFvnyUfLU8m0emXghluKHV1hRfEbmX9ujgqsquxIQWwGczHQOEtWHcMBewTiNn4eXQaxuiG
+  api:
+    url: https://api.notchpay.co
